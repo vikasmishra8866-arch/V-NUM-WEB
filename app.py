@@ -6,10 +6,14 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
-from config import API_HASH, API_ID, TARGET_BOT_USERNAME
 
 app = Flask(__name__)
 CORS(app)
+
+# Render Environment Variables se credentials uthana (No config.py needed)
+API_ID = int(os.environ.get("API_ID", "0"))
+API_HASH = os.environ.get("API_HASH", "")
+TARGET_BOT_USERNAME = os.environ.get("TARGET_BOT_USERNAME", "@V5rtobot")
 
 rate_lock = threading.Lock()
 last_request_time = 0
@@ -26,10 +30,10 @@ def get_vehicle_api():
         }), 400
 
     session_str = os.environ.get("SESSION_STRING", "")
-    if not session_str:
+    if not session_str or not API_ID or not API_HASH:
         return jsonify({
             "status": "error",
-            "message": "SESSION_STRING environment variable is missing on Render!"
+            "message": "Required environment variables (SESSION_STRING, API_ID, API_HASH) are missing on Render!"
         }), 500
 
     try:
