@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Vahan Search Portal</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        @keyframes floatOrbs { 
+            0%, 100% { transform: translateY(0px) scale(1); } 
+            50% { transform: translateY(-15px) scale(1.05); } 
+        }
+        @keyframes fadeInUp { 
+            from { opacity: 0; transform: translateY(12px) scale(0.98); } 
+            to { opacity: 1; transform: translateY(0) scale(1); } 
+        }
+        .orb-1 { animation: floatOrbs 8s ease-in-out infinite; }
+        .orb-2 { animation: floatOrbs 10s ease-in-out infinite reverse; }
+        .card-entrance { animation: fadeInUp 0.4s ease-out forwards; }
+        .btn-glow:hover { box-shadow: 0 4px 14px rgba(37,99,235,0.25); transform: scale(1.02); }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-800 min-h-screen flex items-center justify-center p-4 relative overflow-x-hidden">
+
+    <!-- Background Floating Pastel Orbs -->
+    <div class="absolute top-10 left-10 w-72 h-72 bg-blue-200/40 rounded-full blur-3xl orb-1 pointer-events-none"></div>
+    <div class="absolute bottom-10 right-10 w-80 h-80 bg-purple-200/40 rounded-full blur-3xl orb-2 pointer-events-none"></div>
+
+    <div class="w-full max-w-xl bg-white/80 backdrop-blur-md border border-slate-200 shadow-lg shadow-slate-200/50 rounded-2xl p-6 sm:p-8 relative z-10 card-entrance">
+        
+        <div class="text-center mb-6">
+            <span class="bg-blue-50 text-blue-600 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Master System Pro</span>
+            <h1 class="text-2xl font-bold text-slate-900 mt-2">🛡️ Vahan Stealth Lookup</h1>
+            <p class="text-slate-500 text-sm mt-1">Enter vehicle registration number to fetch live details</p>
+        </div>
+
+        <!-- Search Form -->
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">REGISTRATION NUMBER</label>
+                <input type="text" id="vehInput" 
+                    oninput="this.value = this.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()"
+                    placeholder="Enter Registration No. (e.g. GJ05HG7801)" 
+                    class="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition font-medium">
+            </div>
+
+            <button id="searchBtn" onclick="fetchVehicleData()" 
+                class="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition btn-glow flex items-center justify-center cursor-pointer">
+                Fetch Details
+            </button>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loader" class="hidden mt-6 text-center py-6">
+            <div class="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-2"></div>
+            <p class="text-xs text-slate-500 font-medium">Fetching details securely from gateway...</p>
+        </div>
+
+        <!-- Result Card Container -->
+        <div id="resultContainer" class="hidden mt-6 card-entrance">
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 sm:p-5">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Vehicle Information</h3>
+                <div id="resultContent" class="space-y-2 text-sm text-slate-700">
+                    <!-- Dynamic Data Injected Here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Container -->
+        <div id="errorContainer" class="hidden mt-6 card-entrance">
+            <div class="bg-red-50 border border-red-200 text-red-600 p-4 rounded-xl text-sm font-medium" id="errorText"></div>
+        </div>
+
+    </div>
+
+    <script>
+        let isCooldown = false;
+
+        async function fetchVehicleData() {
+            if (isCooldown) return;
+
+            const veh = document.getElementById('vehInput').value.trim();
+            const btn = document.getElementById('searchBtn');
+            const loader = document.getElementById('loader');
+            const resultContainer = document.getElementById('resultContainer');
+            const errorContainer = document.getElementById('errorContainer');
+            const resultContent = document.getElementById('resultContent');
+            const errorText = document.getElementById('errorText');
+
+            if (!veh) {
+                alert("Please enter a valid vehicle number!");
+                return;
+            }
+
+            // Reset UI
+            resultContainer.classList.add('hidden');
+            errorContainer.classList.add('hidden');
+            loader.classList.remove('hidden');
+
+            try {
+                const response = await fetch(`/api/vahan?veh=${veh}`);
+                const data = await response.json();
+
+                loader.classList.add('hidden');
+
+                if (data.status === "success" && data.data && data.data.details) {
+                    let html = '';
+                    for (const [key, val] of Object.entries(data.data.details)) {
+                        // Clean up icon/markdown formatting keys coming from raw response parsing
+                        let cleanKey = key.replace(/[^\w\s]/gi, '').replace(/_/g, ' ').toUpperCase();
+                        let cleanVal = String(val).replace(/`/g, '');
+                        html += `<div class="flex justify-between border-b border-slate-200/60 pb-2"><span class="font-semibold text-slate-500">${cleanKey}:</span> <span class="text-slate-900 font-medium text-right">${cleanVal}</span></div>`;
+                    }
+                    resultContent.innerHTML = html;
+                    resultContainer.classList.remove('hidden');
+                } else {
+                    errorText.innerText = data.message || "Failed to fetch vehicle details. Please try again.";
+                    errorContainer.classList.remove('hidden');
+                }
+            } catch (err) {
+                loader.classList.add('hidden');
+                errorText.innerText = "Network error or gateway timeout. Please try again.";
+                errorContainer.classList.remove('hidden');
+            }
+
+            // Trigger Active Cooldown Timer (7 Seconds)
+            startCooldown(btn);
+        }
+
+        function startCooldown(btn) {
+            isCooldown = true;
+            let timeLeft = 7;
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            btn.innerText = `Wait ${timeLeft}s...`;
+
+            let timer = setInterval(() => {
+                timeLeft--;
+                if (timeLeft > 0) {
+                    btn.innerText = `Wait ${timeLeft}s...`;
+                } else {
+                    clearInterval(timer);
+                    isCooldown = false;
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    btn.innerText = 'Fetch Details';
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
