@@ -1,73 +1,517 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vahan Info Lookup</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
-        
-        @keyframes floatOrbs { 0%, 100% { transform: translateY(0px) scale(1); } 50% { transform: translateY(-15px) scale(1.05); } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
-        .bg-orb { animation: floatOrbs 8s infinite ease-in-out; }
-        .card-entrance { animation: fadeInUp 0.4s ease-out forwards; }
-        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid #e2e8f0; }
-        .btn-glow:hover { box-shadow: 0 4px 14px rgba(37,99,235,0.25); transform: scale(1.02); }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Vahan Info Portal | Deep Ocean Hydro</title>
+  
+  <!-- OpenGraph & PWA Meta -->
+  <meta name="theme-color" content="#031329" />
+  <meta name="description" content="Instant Vahan Vehicle Details Verification Service" />
+  <meta property="og:title" content="Vahan Info Portal" />
+  <meta property="og:description" content="Lookup complete vehicle details instantly." />
+  <meta property="og:type" content="website" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Inter Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* Custom Theme System Base */
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #031329;
+      color: #f8fafc;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at 50% 0%, #082854 0%, #031329 70%);
+      background-size: 200% 200%;
+      animation: hydroPulse 12s ease infinite;
+    }
+
+    /* Keyframe Animations */
+    @keyframes hydroPulse {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes oceanGlow {
+      0%, 100% { box-shadow: 0 0 15px rgba(6, 182, 212, 0.2); }
+      50% { box-shadow: 0 0 25px rgba(6, 182, 212, 0.5); }
+    }
+
+    .card-entrance {
+      animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .hydro-card {
+      background: #0b1d3a;
+      border: 1px solid rgba(6, 182, 212, 0.2);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      backdrop-filter: blur(8px);
+    }
+
+    .hydro-card:hover {
+      border-color: rgba(6, 182, 212, 0.4);
+    }
+
+    .glow-button {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glow-button:hover:not(:disabled) {
+      transform: translateY(-1px) scale(1.01);
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+    }
+
+    /* Dynamic Toast */
+    #toast {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    /* Print Optimization Rules */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .hydro-card {
+        background: #ffffff !important;
+        border: 1px solid #000000 !important;
+        box-shadow: none !important;
+        color: #000000 !important;
+      }
+      .print-text-dark {
+        color: #000000 !important;
+      }
+    }
+  </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4">
-    <!-- Background Orbs -->
-    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10">
-        <div class="bg-orb absolute top-10 left-10 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
-        <div class="bg-orb absolute bottom-10 right-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
-    </div>
+<body class="p-4 md:p-6 lg:p-8 flex flex-col items-center justify-start antialiased selection:bg-cyan-500 selection:text-white">
 
-    <div class="glass-card w-full max-w-md p-6 rounded-3xl shadow-lg shadow-slate-200/50 card-entrance">
-        <h1 class="text-2xl font-bold text-slate-800 mb-6 text-center">Vehicle Search</h1>
-        <input type="text" id="vehInput" placeholder="Enter Registration No. (e.g. GJ05HG7801)" 
-               class="w-full p-4 mb-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none uppercase"
-               oninput="this.value = this.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()">
-        <button id="searchBtn" onclick="fetchVehicle()" class="w-full h-12 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition btn-glow">
-            Search Details
+  <!-- Main Container (Micro-App Frame) -->
+  <main class="w-full max-w-3xl mx-auto space-y-6">
+
+    <!-- Search Input Panel -->
+    <div class="hydro-card rounded-2xl p-5 md:p-6 no-print">
+      <div class="flex items-center space-x-3 mb-4">
+        <div class="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+          <i data-lucide="car" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-slate-100 tracking-wide">Vehicle Information Verification</h1>
+          <p class="text-xs text-slate-400">Enter registration details for instant RTO lookup</p>
+        </div>
+      </div>
+
+      <form id="vahanForm" onsubmit="handleSearch(event)" class="space-y-4">
+        <div class="relative">
+          <input 
+            type="text" 
+            id="vehInput"
+            placeholder="Enter Reg No. (e.g. GJ05MK4388)" 
+            maxlength="13"
+            autocomplete="off"
+            oninput="sanitizeInput(this)"
+            class="w-full h-12 md:h-14 pl-4 pr-12 bg-slate-900/80 border border-slate-700/80 rounded-xl text-slate-100 text-lg font-semibold tracking-wider placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition-all uppercase"
+            required
+          />
+          <button 
+            type="button" 
+            onclick="clearInput()"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-400 transition-colors p-1"
+          >
+            <i data-lucide="x-circle" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <button 
+          type="submit" 
+          id="submitBtn"
+          class="w-full h-12 md:h-14 glow-button bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl text-base tracking-wide flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+        >
+          <i data-lucide="search" class="w-5 h-5"></i>
+          <span id="btnText">FETCH DETAILS</span>
         </button>
-        <div id="result" class="mt-6 hidden"></div>
+      </form>
     </div>
 
-    <script>
-        async function fetchVehicle() {
-            const btn = document.getElementById('searchBtn');
-            const vehNo = document.getElementById('vehInput').value;
-            const resDiv = document.getElementById('result');
-            
-            if(!vehNo) return;
+    <!-- Loading Spinner State -->
+    <div id="loadingState" class="hidden hydro-card rounded-2xl p-8 text-center space-y-4 no-print">
+      <div class="inline-block p-4 rounded-full bg-cyan-500/10 border border-cyan-500/30 animate-spin">
+        <i data-lucide="loader-2" class="w-8 h-8 text-cyan-400"></i>
+      </div>
+      <div>
+        <h3 class="text-lg font-semibold text-slate-200">Retrieving Records...</h3>
+        <p class="text-xs text-slate-400 mt-1">Routing via secure proxy gateway</p>
+      </div>
+    </div>
 
-            btn.disabled = true;
-            btn.innerText = "Wait 7s...";
-            
-            try {
-                const response = await fetch(`/api/vahan?veh=${vehNo}`);
-                const data = await response.json();
-                
-                resDiv.classList.remove('hidden');
-                resDiv.innerHTML = `<pre class="text-xs bg-slate-100 p-4 rounded-lg text-slate-700 overflow-x-auto">${JSON.stringify(data, null, 2)}</pre>`;
-            } catch(e) {
-                resDiv.innerHTML = `<p class="text-red-500">Error fetching data</p>`;
-            }
+    <!-- Error Message Display -->
+    <div id="errorState" class="hidden hydro-card rounded-2xl p-5 border-red-500/30 bg-red-950/20 text-red-200 flex items-start space-x-3 no-print">
+      <i data-lucide="alert-triangle" class="w-6 h-6 text-red-400 shrink-0 mt-0.5"></i>
+      <div>
+        <h4 class="font-bold text-sm text-red-400">Query Failed</h4>
+        <p id="errorMsg" class="text-xs text-red-300 mt-1">Unable to fetch vehicle details.</p>
+      </div>
+    </div>
 
-            let countdown = 7;
-            const timer = setInterval(() => {
-                countdown--;
-                if(countdown > 0) btn.innerText = `Wait ${countdown}s...`;
-                else {
-                    btn.disabled = false;
-                    btn.innerText = "Search Details";
-                    clearInterval(timer);
-                }
-            }, 1000);
+    <!-- Results Display Container -->
+    <div id="resultContainer" class="hidden space-y-4">
+      
+      <!-- Top Action Bar -->
+      <div class="flex items-center justify-between px-1 no-print">
+        <div class="flex items-center space-x-2">
+          <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <i data-lucide="check-circle-2" class="w-3.5 h-3.5 mr-1"></i> Verified Record
+          </span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="copyToClipboard()" class="p-2 rounded-lg hydro-card hover:bg-slate-800 text-slate-300 hover:text-cyan-400 text-xs font-medium flex items-center space-x-1.5 transition-colors">
+            <i data-lucide="copy" class="w-4 h-4"></i>
+            <span>Copy</span>
+          </button>
+          <button onclick="window.print()" class="p-2 rounded-lg hydro-card hover:bg-slate-800 text-slate-300 hover:text-cyan-400 text-xs font-medium flex items-center space-x-1.5 transition-colors">
+            <i data-lucide="printer" class="w-4 h-4"></i>
+            <span>Print</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Data Display Card -->
+      <div class="hydro-card rounded-2xl p-5 md:p-7 space-y-6 card-entrance">
+        
+        <!-- Header Banner -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between pb-5 border-b border-slate-800 gap-4">
+          <div>
+            <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Registration Number</span>
+            <h2 id="resRegNo" class="text-3xl font-extrabold text-cyan-400 tracking-tight print-text-dark">---</h2>
+          </div>
+          <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex items-center space-x-3">
+            <div class="p-2 rounded-lg bg-cyan-500/10 text-cyan-400">
+              <i data-lucide="map-pin" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-500 uppercase font-semibold block">RTO Location</span>
+              <span id="resRTO" class="text-sm font-semibold text-slate-200 print-text-dark">---</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grid Layout for Core Details -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <!-- Owner Info -->
+          <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 space-y-1">
+            <div class="flex items-center space-x-2 text-slate-400 text-xs mb-1">
+              <i data-lucide="user" class="w-3.5 h-3.5 text-cyan-400"></i>
+              <span>Owner Name</span>
+            </div>
+            <p id="resOwner" class="text-base font-semibold text-slate-100 print-text-dark">---</p>
+          </div>
+
+          <!-- Model Info -->
+          <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 space-y-1">
+            <div class="flex items-center space-x-2 text-slate-400 text-xs mb-1">
+              <i data-lucide="bike" class="w-3.5 h-3.5 text-cyan-400"></i>
+              <span>Make / Model</span>
+            </div>
+            <p id="resModel" class="text-base font-semibold text-slate-100 print-text-dark">---</p>
+          </div>
+
+          <!-- Fuel Type -->
+          <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 space-y-1">
+            <div class="flex items-center space-x-2 text-slate-400 text-xs mb-1">
+              <i data-lucide="fuel" class="w-3.5 h-3.5 text-cyan-400"></i>
+              <span>Fuel Type</span>
+            </div>
+            <p id="resFuel" class="text-base font-semibold text-slate-100 print-text-dark">---</p>
+          </div>
+
+          <!-- Registration Date -->
+          <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 space-y-1">
+            <div class="flex items-center space-x-2 text-slate-400 text-xs mb-1">
+              <i data-lucide="calendar" class="w-3.5 h-3.5 text-cyan-400"></i>
+              <span>Registration Date</span>
+            </div>
+            <p id="resRegDate" class="text-base font-semibold text-slate-100 print-text-dark">---</p>
+          </div>
+
+          <!-- Chassis Number -->
+          <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 space-y-1">
+            <div class="flex items-center space-x-2 text-slate-400 text-xs mb-1">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5 text-cyan-400"></i>
+              <span>Chassis Number</span>
+            </div>
+            <p id="resChassis" class="text-sm font-mono font-semibold text-cyan-300 print-text-dark">---</p>
+          </div>
+
+          <!-- Engine Number -->
+          <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 space-y-1">
+            <div class="flex items-center space-x-2 text-slate-400 text-xs mb-1">
+              <i data-lucide="cpu" class="w-3.5 h-3.5 text-cyan-400"></i>
+              <span>Engine Number</span>
+            </div>
+            <p id="resEngine" class="text-sm font-mono font-semibold text-cyan-300 print-text-dark">---</p>
+          </div>
+        </div>
+
+        <!-- Registered Mobile -->
+        <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+              <i data-lucide="phone" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <span class="text-xs text-slate-400 block">Registered Mobile</span>
+              <span id="resMobile" class="text-sm font-semibold text-slate-100 print-text-dark">---</span>
+            </div>
+          </div>
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 uppercase">Linked</span>
+        </div>
+
+        <!-- Full Address -->
+        <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 space-y-1">
+          <div class="flex items-center space-x-2 text-slate-400 text-xs mb-1">
+            <i data-lucide="home" class="w-3.5 h-3.5 text-cyan-400"></i>
+            <span>Registered Address</span>
+          </div>
+          <p id="resAddress" class="text-xs leading-relaxed text-slate-300 print-text-dark">---</p>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Custom Floating Toast -->
+  <div id="toast" class="fixed bottom-6 right-6 opacity-0 translate-y-4 pointer-events-none bg-cyan-500 text-slate-950 px-4 py-3 rounded-xl font-bold shadow-2xl flex items-center space-x-2 z-50">
+    <i data-lucide="check" class="w-5 h-5"></i>
+    <span id="toastMsg">Copied to clipboard!</span>
+  </div>
+
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Cache TTL: 24 Hours
+    const CACHE_TTL = 24 * 60 * 60 * 1000;
+    let isCooldownActive = false;
+    let currentRawData = null;
+
+    // Real-Time Sanitization & Force Uppercase
+    function sanitizeInput(input) {
+      input.value = input.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    }
+
+    function clearInput() {
+      document.getElementById('vehInput').value = '';
+      document.getElementById('vehInput').focus();
+    }
+
+    // Dynamic iFrame Height Messaging to Parent Portal
+    function notifyParentResize() {
+      if (window.parent) {
+        window.parent.postMessage({
+          type: 'resize',
+          height: document.body.scrollHeight
+        }, '*');
+      }
+    }
+
+    window.addEventListener('resize', notifyParentResize);
+    window.addEventListener('load', notifyParentResize);
+
+    // Toast Notification System
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      toastMsg.innerText = message;
+      toast.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+      
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+      }, 3000);
+    }
+
+    // Helper: Clean raw formatted dynamic strings from JSON response
+    function cleanValue(rawStr) {
+      if (!rawStr) return 'N/A';
+      return rawStr
+        .replace(/[*`✅]/g, '') // Strip markdown formatting and status emojis
+        .trim();
+    }
+
+    // Sanitize Key names from backend detail objects
+    function extractCleanKey(obj, targetKey) {
+      for (const key in obj) {
+        if (key.toLowerCase().includes(targetKey.toLowerCase())) {
+          return cleanValue(obj[key]);
         }
-    </script>
+      }
+      return 'N/A';
+    }
+
+    // Render Data into UI Cards
+    function renderVehicleDetails(details) {
+      document.getElementById('resRegNo').innerText = extractCleanKey(details, 'reg_no');
+      document.getElementById('resRTO').innerText = extractCleanKey(details, 'rto');
+      document.getElementById('resOwner').innerText = extractCleanKey(details, 'owner');
+      document.getElementById('resModel').innerText = extractCleanKey(details, 'make/model');
+      document.getElementById('resFuel').innerText = extractCleanKey(details, 'fuel');
+      document.getElementById('resRegDate').innerText = extractCleanKey(details, 'reg_date');
+      document.getElementById('resChassis').innerText = extractCleanKey(details, 'chassis');
+      document.getElementById('resEngine').innerText = extractCleanKey(details, 'engine');
+      document.getElementById('resMobile').innerText = extractCleanKey(details, 'mobile');
+      document.getElementById('resAddress').innerText = extractCleanKey(details, 'address');
+
+      document.getElementById('resultContainer').classList.remove('hidden');
+      notifyParentResize();
+    }
+
+    // Handle Search Execution
+    async function handleSearch(event) {
+      event.preventDefault();
+      if (isCooldownActive) return;
+
+      const vehNum = document.getElementById('vehInput').value.trim();
+      if (!vehNum) return;
+
+      // Reset State
+      document.getElementById('errorState').classList.add('hidden');
+      document.getElementById('resultContainer').classList.add('hidden');
+      document.getElementById('loadingState').classList.remove('hidden');
+      
+      // Calculate Random 7-12 Second Cooldown Period
+      const cooldownSeconds = Math.floor(Math.random() * 6) + 7; // 7, 8, 9, 10, 11, or 12
+      startCooldown(cooldownSeconds);
+
+      // Check LocalStorage Cache
+      const cacheKey = `vahan_${vehNum}`;
+      const cachedItem = localStorage.getItem(cacheKey);
+      
+      if (cachedItem) {
+        try {
+          const parsedCache = JSON.parse(cachedItem);
+          if (Date.now() - parsedCache.timestamp < CACHE_TTL) {
+            setTimeout(() => {
+              document.getElementById('loadingState').classList.add('hidden');
+              currentRawData = parsedCache.data;
+              renderVehicleDetails(parsedCache.data.details);
+              showToast("Loaded from instant cache");
+            }, 400); // Micro delay for smooth transition
+            return;
+          }
+        } catch (e) {
+          localStorage.removeItem(cacheKey);
+        }
+      }
+
+      // Fetch via Gateway / Fallback
+      try {
+        const data = await fetchVahanData(vehNum);
+        if (data && data.status === "success" && data.data && data.data.details) {
+          // Cache Success Response
+          localStorage.setItem(cacheKey, JSON.stringify({
+            timestamp: Date.now(),
+            data: data.data
+          }));
+
+          currentRawData = data.data;
+          renderVehicleDetails(data.data.details);
+        } else {
+          throw new Error("Invalid response format received from upstream API.");
+        }
+      } catch (err) {
+        document.getElementById('errorMsg').innerText = err.message || "Failed to fetch details.";
+        document.getElementById('errorState').classList.remove('hidden');
+      } finally {
+        document.getElementById('loadingState').classList.add('hidden');
+        notifyParentResize();
+      }
+    }
+
+    // Dual Gateway Fetch (Python Primary -> CORS Fallback)
+    async function fetchVahanData(vehNum) {
+      const primaryUrl = `/api/vahan?veh=${encodeURIComponent(vehNum)}`;
+      const fallbackProxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://vahan-system.onrender.com/api/vahan?veh=${vehNum}`)}`;
+
+      // Try Primary Gateway (Flask Proxy with 20s Timeout)
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        
+        const res = await fetch(primaryUrl, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        
+        if (res.ok) {
+          return await res.json();
+        }
+      } catch (e) {
+        console.warn("Primary proxy gateway failed. Escalating to client CORS fallback...");
+      }
+
+      // Try Fallback Public CORS Proxy (25s AbortController Timeout)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+      const res = await fetch(fallbackProxyUrl, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        throw new Error("Service temporarily unavailable across network proxies.");
+      }
+      return await res.json();
+    }
+
+    // Button Cooldown Timer System
+    function startCooldown(seconds) {
+      isCooldownActive = true;
+      const submitBtn = document.getElementById('submitBtn');
+      const btnText = document.getElementById('btnText');
+      submitBtn.disabled = true;
+
+      let remaining = seconds;
+      btnText.innerText = `WAIT ${remaining}S...`;
+
+      const interval = setInterval(() => {
+        remaining--;
+        if (remaining > 0) {
+          btnText.innerText = `WAIT ${remaining}S...`;
+        } else {
+          clearInterval(interval);
+          isCooldownActive = false;
+          submitBtn.disabled = false;
+          btnText.innerText = "FETCH DETAILS";
+        }
+      }, 1000);
+    }
+
+    // Clipboard Copy Helper
+    function copyToClipboard() {
+      if (!currentRawData) return;
+      const copyText = currentRawData.raw_response || JSON.stringify(currentRawData.details, null, 2);
+      navigator.clipboard.writeText(copyText).then(() => {
+        showToast("Details copied to clipboard!");
+      });
+    }
+  </script>
 </body>
 </html>
