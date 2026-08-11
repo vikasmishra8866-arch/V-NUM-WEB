@@ -5,22 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Vahan Info Portal | Deep Ocean Hydro</title>
   
-  <!-- OpenGraph & PWA Meta -->
   <meta name="theme-color" content="#031329" />
-  <meta name="description" content="Instant Vahan Vehicle Details Verification Service" />
-  <meta property="og:title" content="Vahan Info Portal" />
-  <meta property="og:description" content="Lookup complete vehicle details instantly." />
-  <meta property="og:type" content="website" />
-
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Inter Font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <style>
-    /* Custom Theme System Base */
     body {
       font-family: 'Inter', sans-serif;
       background-color: #031329;
@@ -33,30 +23,27 @@
       animation: hydroPulse 12s ease infinite;
     }
 
-    /* Keyframe Animations */
     @keyframes hydroPulse {
       0%, 100% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
     }
 
     @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(16px) scale(0.98);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
+      from { opacity: 0; transform: translateY(16px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    @keyframes oceanGlow {
-      0%, 100% { box-shadow: 0 0 15px rgba(6, 182, 212, 0.2); }
-      50% { box-shadow: 0 0 25px rgba(6, 182, 212, 0.5); }
+    @keyframes pulseGlowRed {
+      0%, 100% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.2); }
+      50% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.5); }
     }
 
     .card-entrance {
       animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .not-found-glow {
+      animation: pulseGlowRed 3s infinite ease-in-out;
     }
 
     .hydro-card {
@@ -66,12 +53,8 @@
       backdrop-filter: blur(8px);
     }
 
-    .hydro-card:hover {
-      border-color: rgba(6, 182, 212, 0.4);
-    }
-
     .glow-button {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.3s ease;
     }
 
     .glow-button:hover:not(:disabled) {
@@ -79,38 +62,34 @@
       box-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
     }
 
-    /* Dynamic Toast */
     #toast {
       transition: opacity 0.3s ease, transform 0.3s ease;
     }
 
-    /* Print Optimization Rules */
+    /* Disable Text Selection for Extra Security */
+    .no-select {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
     @media print {
-      body {
-        background: #ffffff !important;
-        color: #000000 !important;
-      }
-      .no-print {
-        display: none !important;
-      }
-      .hydro-card {
-        background: #ffffff !important;
-        border: 1px solid #000000 !important;
-        box-shadow: none !important;
-        color: #000000 !important;
-      }
-      .print-text-dark {
-        color: #000000 !important;
-      }
+      body { background: #ffffff !important; color: #000000 !important; }
+      .no-print { display: none !important; }
+      .hydro-card { background: #ffffff !important; border: 1px solid #000000 !important; box-shadow: none !important; color: #000000 !important; }
+      .print-text-dark { color: #000000 !important; }
     }
   </style>
 </head>
-<body class="p-4 md:p-6 lg:p-8 flex flex-col items-center justify-start antialiased selection:bg-cyan-500 selection:text-white">
+<body class="p-4 md:p-6 lg:p-8 flex flex-col items-center justify-center min-h-screen antialiased selection:bg-cyan-500 selection:text-white no-select">
 
-  <!-- Main Container (Micro-App Frame) -->
-  <main class="w-full max-w-3xl mx-auto space-y-6">
+  <!-- Centered Main Wrapper -->
+  <main class="w-full max-w-3xl mx-auto space-y-6 my-auto">
 
-    <!-- Search Input Panel -->
+    <!-- Search Panel (Centered Layout) -->
     <div class="hydro-card rounded-2xl p-5 md:p-6 no-print">
       <div class="flex items-center space-x-3 mb-4">
         <div class="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
@@ -154,36 +133,37 @@
       </form>
     </div>
 
-    <!-- Loading Spinner State -->
+    <!-- Live Loading State -->
     <div id="loadingState" class="hidden hydro-card rounded-2xl p-8 text-center space-y-4 no-print">
       <div class="inline-block p-4 rounded-full bg-cyan-500/10 border border-cyan-500/30 animate-spin">
         <i data-lucide="loader-2" class="w-8 h-8 text-cyan-400"></i>
       </div>
       <div>
         <h3 class="text-lg font-semibold text-slate-200">Retrieving Records...</h3>
-        <p class="text-xs text-slate-400 mt-1">Routing via secure proxy gateway</p>
+        <p class="text-xs text-cyan-400 mt-1 font-mono">Connecting to Vahan Database (<span id="loadTimer">0</span>s)</p>
+        <p class="text-[11px] text-slate-500 mt-1">Fetching live government records takes ~10-14 seconds. Please wait.</p>
       </div>
     </div>
 
-    <!-- Error Message Display -->
-    <div id="errorState" class="hidden hydro-card rounded-2xl p-5 border-red-500/30 bg-red-950/20 text-red-200 flex items-start space-x-3 no-print">
-      <i data-lucide="alert-triangle" class="w-6 h-6 text-red-400 shrink-0 mt-0.5"></i>
+    <!-- Premium "Data Not Found" Animation State -->
+    <div id="notFoundState" class="hidden hydro-card rounded-2xl p-8 text-center space-y-4 border-red-500/40 bg-red-950/20 card-entrance not-found-glow no-print">
+      <div class="inline-flex p-4 rounded-full bg-red-500/10 text-red-400 border border-red-500/30">
+        <i data-lucide="file-x-2" class="w-10 h-10 animate-bounce"></i>
+      </div>
       <div>
-        <h4 class="font-bold text-sm text-red-400">Query Failed</h4>
-        <p id="errorMsg" class="text-xs text-red-300 mt-1">Unable to fetch vehicle details.</p>
+        <h3 class="text-xl font-bold text-red-400 tracking-wide">VEHICLE DETAILS NOT FOUND</h3>
+        <p id="notFoundSubText" class="text-xs text-slate-300 mt-2 max-w-md mx-auto leading-relaxed">
+          No records found matching the requested registration number, or the upstream server timed out after 20 seconds.
+        </p>
       </div>
     </div>
 
-    <!-- Results Display Container -->
+    <!-- Results Display -->
     <div id="resultContainer" class="hidden space-y-4">
-      
-      <!-- Top Action Bar -->
       <div class="flex items-center justify-between px-1 no-print">
-        <div class="flex items-center space-x-2">
-          <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <i data-lucide="check-circle-2" class="w-3.5 h-3.5 mr-1"></i> Verified Record
-          </span>
-        </div>
+        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <i data-lucide="check-circle-2" class="w-3.5 h-3.5 mr-1"></i> Verified Record
+        </span>
         <div class="flex items-center space-x-2">
           <button onclick="copyToClipboard()" class="p-2 rounded-lg hydro-card hover:bg-slate-800 text-slate-300 hover:text-cyan-400 text-xs font-medium flex items-center space-x-1.5 transition-colors">
             <i data-lucide="copy" class="w-4 h-4"></i>
@@ -196,10 +176,7 @@
         </div>
       </div>
 
-      <!-- Main Data Display Card -->
       <div class="hydro-card rounded-2xl p-5 md:p-7 space-y-6 card-entrance">
-        
-        <!-- Header Banner -->
         <div class="flex flex-col md:flex-row md:items-center justify-between pb-5 border-b border-slate-800 gap-4">
           <div>
             <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Registration Number</span>
@@ -216,10 +193,7 @@
           </div>
         </div>
 
-        <!-- Grid Layout for Core Details -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          
-          <!-- Owner Info -->
           <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 space-y-1">
             <div class="flex items-center space-x-2 text-slate-400 text-xs mb-1">
               <i data-lucide="user" class="w-3.5 h-3.5 text-cyan-400"></i>
@@ -228,7 +202,6 @@
             <p id="resOwner" class="text-base font-semibold text-slate-100 print-text-dark">---</p>
           </div>
 
-          <!-- Model Info -->
           <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 space-y-1">
             <div class="flex items-center space-x-2 text-slate-400 text-xs mb-1">
               <i data-lucide="bike" class="w-3.5 h-3.5 text-cyan-400"></i>
@@ -237,7 +210,6 @@
             <p id="resModel" class="text-base font-semibold text-slate-100 print-text-dark">---</p>
           </div>
 
-          <!-- Fuel Type -->
           <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 space-y-1">
             <div class="flex items-center space-x-2 text-slate-400 text-xs mb-1">
               <i data-lucide="fuel" class="w-3.5 h-3.5 text-cyan-400"></i>
@@ -246,7 +218,6 @@
             <p id="resFuel" class="text-base font-semibold text-slate-100 print-text-dark">---</p>
           </div>
 
-          <!-- Registration Date -->
           <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 space-y-1">
             <div class="flex items-center space-x-2 text-slate-400 text-xs mb-1">
               <i data-lucide="calendar" class="w-3.5 h-3.5 text-cyan-400"></i>
@@ -255,7 +226,6 @@
             <p id="resRegDate" class="text-base font-semibold text-slate-100 print-text-dark">---</p>
           </div>
 
-          <!-- Chassis Number -->
           <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 space-y-1">
             <div class="flex items-center space-x-2 text-slate-400 text-xs mb-1">
               <i data-lucide="shield-check" class="w-3.5 h-3.5 text-cyan-400"></i>
@@ -264,7 +234,6 @@
             <p id="resChassis" class="text-sm font-mono font-semibold text-cyan-300 print-text-dark">---</p>
           </div>
 
-          <!-- Engine Number -->
           <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 space-y-1">
             <div class="flex items-center space-x-2 text-slate-400 text-xs mb-1">
               <i data-lucide="cpu" class="w-3.5 h-3.5 text-cyan-400"></i>
@@ -274,7 +243,6 @@
           </div>
         </div>
 
-        <!-- Registered Mobile -->
         <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 flex items-center justify-between">
           <div class="flex items-center space-x-3">
             <div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
@@ -288,7 +256,6 @@
           <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 uppercase">Linked</span>
         </div>
 
-        <!-- Full Address -->
         <div class="bg-slate-900/40 border border-slate-800/80 rounded-xl p-4 space-y-1">
           <div class="flex items-center space-x-2 text-slate-400 text-xs mb-1">
             <i data-lucide="home" class="w-3.5 h-3.5 text-cyan-400"></i>
@@ -296,27 +263,39 @@
           </div>
           <p id="resAddress" class="text-xs leading-relaxed text-slate-300 print-text-dark">---</p>
         </div>
-
       </div>
     </div>
   </main>
 
-  <!-- Custom Floating Toast -->
   <div id="toast" class="fixed bottom-6 right-6 opacity-0 translate-y-4 pointer-events-none bg-cyan-500 text-slate-950 px-4 py-3 rounded-xl font-bold shadow-2xl flex items-center space-x-2 z-50">
     <i data-lucide="check" class="w-5 h-5"></i>
     <span id="toastMsg">Copied to clipboard!</span>
   </div>
 
   <script>
-    // Initialize Lucide Icons
     lucide.createIcons();
 
-    // Cache TTL: 24 Hours
+    // Lock Mouse Right-Click Context Menu
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+    });
+
+    // Lock Keyboard F12 and DevTools Shortcuts
+    document.addEventListener('keydown', function(e) {
+      if (
+        e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) ||
+        (e.ctrlKey && (e.key === 'U' || e.key === 'u'))
+      ) {
+        e.preventDefault();
+      }
+    });
+
     const CACHE_TTL = 24 * 60 * 60 * 1000;
     let isCooldownActive = false;
     let currentRawData = null;
+    let loadingTimerInterval = null;
 
-    // Real-Time Sanitization & Force Uppercase
     function sanitizeInput(input) {
       input.value = input.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
     }
@@ -326,7 +305,6 @@
       document.getElementById('vehInput').focus();
     }
 
-    // Dynamic iFrame Height Messaging to Parent Portal
     function notifyParentResize() {
       if (window.parent) {
         window.parent.postMessage({
@@ -339,27 +317,21 @@
     window.addEventListener('resize', notifyParentResize);
     window.addEventListener('load', notifyParentResize);
 
-    // Toast Notification System
     function showToast(message) {
       const toast = document.getElementById('toast');
       const toastMsg = document.getElementById('toastMsg');
       toastMsg.innerText = message;
       toast.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
-      
       setTimeout(() => {
         toast.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
       }, 3000);
     }
 
-    // Helper: Clean raw formatted dynamic strings from JSON response
     function cleanValue(rawStr) {
       if (!rawStr) return 'N/A';
-      return rawStr
-        .replace(/[*`✅]/g, '') // Strip markdown formatting and status emojis
-        .trim();
+      return rawStr.replace(/[*`✅]/g, '').trim();
     }
 
-    // Sanitize Key names from backend detail objects
     function extractCleanKey(obj, targetKey) {
       for (const key in obj) {
         if (key.toLowerCase().includes(targetKey.toLowerCase())) {
@@ -369,7 +341,6 @@
       return 'N/A';
     }
 
-    // Render Data into UI Cards
     function renderVehicleDetails(details) {
       document.getElementById('resRegNo').innerText = extractCleanKey(details, 'reg_no');
       document.getElementById('resRTO').innerText = extractCleanKey(details, 'rto');
@@ -386,7 +357,21 @@
       notifyParentResize();
     }
 
-    // Handle Search Execution
+    function startLoadingTimer() {
+      let seconds = 0;
+      const timerEl = document.getElementById('loadTimer');
+      timerEl.innerText = seconds;
+      clearInterval(loadingTimerInterval);
+      loadingTimerInterval = setInterval(() => {
+        seconds++;
+        timerEl.innerText = seconds;
+      }, 1000);
+    }
+
+    function stopLoadingTimer() {
+      clearInterval(loadingTimerInterval);
+    }
+
     async function handleSearch(event) {
       event.preventDefault();
       if (isCooldownActive) return;
@@ -394,16 +379,15 @@
       const vehNum = document.getElementById('vehInput').value.trim();
       if (!vehNum) return;
 
-      // Reset State
-      document.getElementById('errorState').classList.add('hidden');
+      document.getElementById('notFoundState').classList.add('hidden');
       document.getElementById('resultContainer').classList.add('hidden');
       document.getElementById('loadingState').classList.remove('hidden');
       
-      // Calculate Random 7-12 Second Cooldown Period
-      const cooldownSeconds = Math.floor(Math.random() * 6) + 7; // 7, 8, 9, 10, 11, or 12
+      startLoadingTimer();
+
+      const cooldownSeconds = Math.floor(Math.random() * 6) + 7;
       startCooldown(cooldownSeconds);
 
-      // Check LocalStorage Cache
       const cacheKey = `vahan_${vehNum}`;
       const cachedItem = localStorage.getItem(cacheKey);
       
@@ -412,11 +396,12 @@
           const parsedCache = JSON.parse(cachedItem);
           if (Date.now() - parsedCache.timestamp < CACHE_TTL) {
             setTimeout(() => {
+              stopLoadingTimer();
               document.getElementById('loadingState').classList.add('hidden');
               currentRawData = parsedCache.data;
               renderVehicleDetails(parsedCache.data.details);
-              showToast("Loaded from instant cache");
-            }, 400); // Micro delay for smooth transition
+              showToast("Loaded instantly from local cache!");
+            }, 300);
             return;
           }
         } catch (e) {
@@ -424,39 +409,35 @@
         }
       }
 
-      // Fetch via Gateway / Fallback
       try {
         const data = await fetchVahanData(vehNum);
         if (data && data.status === "success" && data.data && data.data.details) {
-          // Cache Success Response
           localStorage.setItem(cacheKey, JSON.stringify({
             timestamp: Date.now(),
             data: data.data
           }));
-
           currentRawData = data.data;
           renderVehicleDetails(data.data.details);
         } else {
-          throw new Error("Invalid response format received from upstream API.");
+          throw new Error("No vehicle details match the entered registration number.");
         }
       } catch (err) {
-        document.getElementById('errorMsg').innerText = err.message || "Failed to fetch details.";
-        document.getElementById('errorState').classList.remove('hidden');
+        document.getElementById('notFoundSubText').innerText = err.message || "No records found matching registration number or request timed out.";
+        document.getElementById('notFoundState').classList.remove('hidden');
       } finally {
+        stopLoadingTimer();
         document.getElementById('loadingState').classList.add('hidden');
         notifyParentResize();
       }
     }
 
-    // Dual Gateway Fetch (Python Primary -> CORS Fallback)
     async function fetchVahanData(vehNum) {
       const primaryUrl = `/api/vahan?veh=${encodeURIComponent(vehNum)}`;
       const fallbackProxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://vahan-system.onrender.com/api/vahan?veh=${vehNum}`)}`;
 
-      // Try Primary Gateway (Flask Proxy with 20s Timeout)
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        const timeoutId = setTimeout(() => controller.abort(), 20000); 
         
         const res = await fetch(primaryUrl, { signal: controller.signal });
         clearTimeout(timeoutId);
@@ -465,23 +446,21 @@
           return await res.json();
         }
       } catch (e) {
-        console.warn("Primary proxy gateway failed. Escalating to client CORS fallback...");
+        console.warn("Primary gateway failed/timed out. Trying fallback proxy...");
       }
 
-      // Try Fallback Public CORS Proxy (25s AbortController Timeout)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      const timeoutId = setTimeout(() => controller.abort(), 22000);
 
       const res = await fetch(fallbackProxyUrl, { signal: controller.signal });
       clearTimeout(timeoutId);
 
       if (!res.ok) {
-        throw new Error("Service temporarily unavailable across network proxies.");
+        throw new Error("Vehicle details not found or connection timed out.");
       }
       return await res.json();
     }
 
-    // Button Cooldown Timer System
     function startCooldown(seconds) {
       isCooldownActive = true;
       const submitBtn = document.getElementById('submitBtn');
@@ -504,7 +483,6 @@
       }, 1000);
     }
 
-    // Clipboard Copy Helper
     function copyToClipboard() {
       if (!currentRawData) return;
       const copyText = currentRawData.raw_response || JSON.stringify(currentRawData.details, null, 2);
